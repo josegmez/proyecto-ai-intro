@@ -1,5 +1,6 @@
 import os
 import pickle
+import argparse
 
 import pandas as pd
 from catboost import CatBoostRegressor, Pool
@@ -7,6 +8,17 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
+
+# Argumentos
+parser = argparse.ArgumentParser(description='Entrena un modelo de predicción.')
+parser.add_argument('--data_file', required=True, type=str, help='Archivo CSV de entrenamiento')
+parser.add_argument('--model_file', required=True, type=str, help='Archivo donde se guardará el modelo entrenado')
+parser.add_argument('--preprocessing_file', required=True, type=str, help='Archivo donde se guardará el preprocesamiento')
+args = parser.parse_args()
+
+data_file = args.data_file
+model_file = args.model_file
+preprocessing_file = args.preprocessing_file
 
 rs = 42
 task_type = "CPU"
@@ -48,7 +60,7 @@ cat_features = [
 ]
 
 # Cargar y limpiar los datos de entrenamiento
-df_train = pd.read_csv("../data/train.csv", index_col="id")
+df_train = pd.read_csv(data_file, index_col="id")
 df_train_cleaned = cleaning_data(df_train)
 
 # Preprocesamiento de los datos
@@ -91,13 +103,13 @@ model.fit(X_train_pool)
 print("Modelo entrenado exitosamente.")
 print(model.score(X_train_pool))
 
-if not os.path.exists("../models"):
+if not os.path.exists("/app/models"):
     os.makedirs("../models")
 
 # Guardar el modelo entrenado
-with open("../models/model.pkl", "wb") as file:
+with open(model_file, "wb") as file:
     pickle.dump(model, file)
 
 # Guardar el preprocesamiento de los datos
-with open("../models/preprocessing.pkl", "wb") as file:
+with open(preprocessing_file, "wb") as file:
     pickle.dump(preprocessing, file)

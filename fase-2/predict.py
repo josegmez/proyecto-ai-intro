@@ -1,10 +1,23 @@
 import os
 import pickle
+import argparse
 
 import pandas as pd
 from catboost import Pool
 from sklearn.impute import SimpleImputer
 
+# Definir argumentos con argparse
+parser = argparse.ArgumentParser(description='Genera predicciones usando un modelo entrenado.')
+parser.add_argument('--input_file', required=True, type=str, help='Archivo CSV de entrada con los datos a predecir')
+parser.add_argument('--model_file', required=True, type=str, help='Archivo con el modelo entrenado')
+parser.add_argument('--preprocessing_file', required=True, type=str, help='Archivo con el preprocesamiento guardado')
+parser.add_argument('--predictions_file', required=True, type=str, help='Archivo donde se guardarán las predicciones')
+args = parser.parse_args()
+
+input_file = args.input_file
+model_file = args.model_file
+preprocessing_file = args.preprocessing_file
+predictions_file = args.predictions_file
 
 # Función para limpiar los datos
 def cleaning_data(df):
@@ -40,11 +53,11 @@ cat_features = [
     "brand",
     "model_year",
 ]
-if not os.path.exists("../data/test.csv"):
+if not os.path.exists("/app/data/test.csv"):
     raise FileNotFoundError("No se encontró el archivo '../data/test.csv'.")
 
 # Cargar y limpiar los datos de prueba
-df_test = pd.read_csv("../data/test.csv", index_col="id")
+df_test = pd.read_csv(input_file, index_col="id")
 df_test_cleaned = cleaning_data(df_test)
 
 # Asegurarse de que las columnas categóricas estén en el formato correcto
@@ -54,10 +67,10 @@ for cat_col in cat_features:
 # Transformar el conjunto de prueba
 X_test = df_test_cleaned
 
-if not os.path.exists("../models/preprocessing.pkl"):
+if not os.path.exists("/app/models/preprocessing.pkl"):
     raise FileNotFoundError("No se encontró el archivo '../models/preprocessing.pkl'.")
 
-with open("../models/preprocessing.pkl", "rb") as file:
+with open(preprocessing_file, "rb") as file:
     preprocessing = pickle.load(file)
 
 X_test_transformed = preprocessing.transform(X_test)
@@ -67,7 +80,7 @@ X_test_pool = Pool(X_test_transformed)
 
 
 # Cargar el modelo entrenado
-modelPath = "../models/model.pkl"
+modelPath = model_file
 
 if not os.path.exists(modelPath):
     raise FileNotFoundError(f"No se encontró el archivo '{modelPath}'.")
@@ -80,6 +93,6 @@ predictions = model.predict(X_test_pool)
 
 # Guardar las predicciones en un archivo CSV
 output = pd.DataFrame({"id": df_test_cleaned.index, "predicted_price": predictions})
-output.to_csv("../data/predicts.csv", index=False)
+output.to_csv(predictions_file, index=False)
 
-print("Predicciones guardadas en '../data/predicts.csv'.")
+print("Predicciones guardadas en '/app/data/predicts.csv'.")
