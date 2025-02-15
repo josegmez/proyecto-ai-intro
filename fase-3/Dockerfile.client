@@ -1,0 +1,17 @@
+FROM python:3.10-slim
+
+ARG API_URL 
+ENV API_URL=${API_URL}
+
+# Establecemos el directorio de trabajo
+WORKDIR /app
+
+# Copiamos el script del cliente (client.py)
+COPY ./fase-3/client.py /fase-3/client.py
+COPY ./fase-3/requirements-client.txt /fase-3/requirements.txt
+
+# Asegurar   que se instalen las dependencias de la API REST si hay nuevas
+RUN pip install --no-cache-dir -r /fase-3/requirements.txt
+
+# Comando para ejecutar el cliente
+CMD ["sh", "-c", "python /fase-3/client.py --api_url=${API_URL}"]
